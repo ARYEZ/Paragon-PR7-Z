@@ -83,7 +83,7 @@ def test_wrong_password_reports_error(exe, tree, tmp_path, qapp):
     res, _, _ = run_job(operations.extract_steps(exe, arc, str(tmp_path / "o"), ExtractOptions(password="wrong",
                                                                                                overwrite="overwrite")),
                         qapp)
-    assert not res.ok and any("Wrong password" in e for e in res.errors)
+    assert not res.ok and any("Wrong password" in e for e in res.errors), (res.errors, res.log)
 
 
 def test_extract_from_subfolder_is_relative(exe, tree, tmp_path, qapp):
@@ -131,6 +131,15 @@ def test_add_from_two_folders(exe, tmp_path, qapp):
                                                         str(tmp_path / "y" / "deep")], AddOptions(format="zip")), qapp)
     assert res.ok
     assert {"one.txt", "deep/two.txt"} <= items(exe, arc)
+
+
+def test_log_keeps_7z_output(exe, tree, qapp):
+    """Checksum and benchmark windows show the job's log: it must hold 7z's text."""
+    from pr7z.jobs import Step
+    res, _, _ = run_job([Step("hash", engine.hash_args(exe, [str(tree / "a.txt")], "SHA256"))], qapp)
+    import hashlib
+    assert res.ok
+    assert any(hashlib.sha256(b"hello\n").hexdigest() in ln.lower() for ln in res.log), res.log
 
 
 def test_cancel(exe, tmp_path, qapp):

@@ -25,8 +25,9 @@ def tree(tmp_path):
     """A small folder with a subfolder, a unicode name and a 300 KB incompressible file."""
     src = tmp_path / "src"
     (src / "sub").mkdir(parents=True)
-    (src / "a.txt").write_text("hello\n", encoding="utf-8")
-    (src / "sub" / "ünï cødé.txt").write_text("x\n", encoding="utf-8")
+    # Exact bytes: write_text would turn \n into \r\n on Windows and change the sizes.
+    (src / "a.txt").write_bytes(b"hello\n")
+    (src / "sub" / "ünï cødé.txt").write_bytes(b"x\n")
     (src / "sub" / "big.bin").write_bytes(os.urandom(300_000))
     return src
 

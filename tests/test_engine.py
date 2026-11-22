@@ -114,7 +114,7 @@ def test_test_ok_and_wrong_password(exe, tree, tmp_path):
     p = ProgressParser()
     p.feed(bad.stdout.decode())
     p.finish()
-    assert p.errors and "Wrong password" in p.errors[0]
+    assert p.errors and "Wrong password" in p.errors[0], repr(bad.stdout)
 
 
 def test_delete_and_rename(exe, tree, tmp_path):
@@ -204,6 +204,22 @@ def test_overwrite_prompt_parsed_and_answered(exe, tree, tmp_path):
     assert len(q) == 1
     assert q[0].value["existing"]["path"].replace("\\", "/").endswith("src/a.txt")
     assert q[0].value["incoming"]["size"].startswith("6 bytes")
+
+
+def test_windows_carriage_returns():
+    """Windows 7z redraws progress with a bare \r and ends lines with \r\n."""
+    text = ("Testing archive: e.7z\r\n  0%\r    \rERROR: Data Error in encrypted file. Wrong password? : a.txt\r\n"
+            " 50% 1 T b.bin\r                \r100%\r    \rEverything is Ok\r\n")
+    p = ProgressParser()
+    events = []
+    for i in range(0, len(text), 5):
+        events += p.feed(text[i:i + 5])
+    events += p.finish()
+    assert p.errors == ["Data Error in encrypted file. Wrong password? : a.txt"]
+    assert [e.value for e in events if e.kind == "percent"] == [0, 50, 100]
+    assert ("b.bin", "T") in [(e.value, e.text) for e in events if e.kind == "file"]
+    lines = [e.text for e in events if e.kind == "line"]
+    assert "Everything is Ok" in lines and "Testing archive: e.7z" in lines  # the log keeps the text
 
 
 def test_prompt_split_across_chunks():

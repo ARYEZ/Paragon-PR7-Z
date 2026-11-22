@@ -412,6 +412,7 @@ class ProgressParser:
         self.total: int | None = None
 
     def feed(self, chunk: str) -> list[Event]:
+        # Windows 7z ends lines with \r\n and also redraws progress with a bare \r: both separate tokens.
         self.buf += chunk.replace("\r\n", "\n")
         events: list[Event] = []
         while True:
@@ -433,7 +434,7 @@ class ProgressParser:
                 events.append(Event("password"))
                 continue
             # Otherwise handle what's complete: tokens end at \n or at a backspace run.
-            cut = max(self.buf.rfind("\n"), self.buf.rfind("\b"))
+            cut = max(self.buf.rfind("\n"), self.buf.rfind("\b"), self.buf.rfind("\r"))
             if cut < 0:
                 break
             done, self.buf = self.buf[:cut + 1], self.buf[cut + 1:]
@@ -452,7 +453,7 @@ class ProgressParser:
     @staticmethod
     def _tokens(text: str) -> list[str]:
         out = []
-        for part in re.split(r"[\b\n]+", text):
+        for part in re.split(r"[\b\r\n]+", text):
             if part.strip():
                 out.append(part.rstrip())
         return out
@@ -502,7 +503,7 @@ class ProgressParser:
             if t:
                 self.total = int(t.group(1))
                 events.append(Event("total", self.total))
-        events.append(Event("line", s))
+        events.append(Event("line", s, s))
 
 
 # Answers to the overwrite question, keyed as PR7-Z's dialog returns them.
