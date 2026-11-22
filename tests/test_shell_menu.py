@@ -90,6 +90,32 @@ def test_mail_without_windows_reports_false():
         assert mail.send_files(["x.7z"]) is False
 
 
+def test_deploy_dll_copies_by_content(tmp_path, monkeypatch):
+    """Registering copies the DLL under a content-hash name, so an update never overwrites the copy
+    Explorer has locked; old copies go when they can."""
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "appdata"))
+    v1 = tmp_path / "v1.dll"
+    v1.write_bytes(b"build one")
+    a = shell.deploy_dll(v1)
+    assert a.parent == tmp_path / "appdata" / "Paragon" / "PR7-Z" / "shellext"
+    assert a.read_bytes() == b"build one"
+    assert shell.deploy_dll(v1) == a                       # same build: same file, no rewrite
+    v2 = tmp_path / "v2.dll"
+    v2.write_bytes(b"build two")
+    b = shell.deploy_dll(v2)
+    assert b != a and b.read_bytes() == b"build two"
+    assert not a.exists()                                  # the old copy was free, so it went
+    real_unlink = Path.unlink
+
+    def locked(self, *args, **kw):                         # Explorer holding a copy: unlink fails
+        if self == b:
+            raise PermissionError("in use")
+        return real_unlink(self, *args, **kw)
+
+    monkeypatch.setattr(Path, "unlink", locked)
+    assert shell.remove_old_dlls() == [b] and b.exists()   # left alone, reported, retried later
+
+
 # ---------------------------------------------------------------- PR7ZShell.dll (Windows)
 windows = pytest.mark.skipif(os.name != "nt", reason="Explorer's shell extension is Windows-only")
 
@@ -282,7 +308,9 @@ def test_register_and_unregister(dll, menu_settings):
     try:
         k = winreg.OpenKey(winreg.HKEY_CURRENT_USER, rf"Software\Classes\CLSID\{shell.CLSID}\InprocServer32")
         path, _ = winreg.QueryValueEx(k, "")
-        assert Path(path) == shell.shell_dll()
+        # a hashed copy in the per-user folder, byte-identical to the built DLL
+        assert Path(path).parent == shell.deploy_dir() and Path(path).name.startswith("PR7ZShell-")
+        assert Path(path).read_bytes() == shell.shell_dll().read_bytes()
         assert shell.menu_registered() == "extension"
     finally:
         shell.unregister_menu()

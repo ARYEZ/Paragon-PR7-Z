@@ -39,6 +39,15 @@ The owner writes Python; explain the why of changes.
   --config Release` (CI does it); a syntax check here: `x86_64-w64-mingw32-g++ -std=c++17 -Wall -Wextra
   -shared ...`. Tests drive the real COM path through its `PR7Z_SelfTest` export (tests/test_shell_menu.py,
   Windows only) and split each command line with `CommandLineToArgvW`.
+- **Installer: `installer/pr7z.iss`** (Inno Setup 6), per-user (`PrivilegesRequired=lowest`, into
+  %LOCALAPPDATA%\Programs\PR7-Z); AppId {9914C6C8-01EC-476F-845D-98F814A0426E} is permanent (upgrades find
+  the install by it). It registers through PR7-Z itself (`--register-menu`, `--register-open-with`;
+  `--unregister` on uninstall), so installer, Options and CLI share `shell.py`. Wizard images:
+  `tools/make_installer_art.py`. CI installs it silently and runs `tools/verify_install.py installed`, then
+  uninstalls and runs `... uninstalled`.
+- **The registered menu DLL is a copy** (`shell.deploy_dll`): %LOCALAPPDATA%\Paragon\PR7-Z\shellext\
+  PR7ZShell-<sha256[:12]>.dll. Explorer locks the DLL it has loaded; registering a content-named copy
+  means installs never overwrite a locked file or restart Explorer. Don't register the file in `_internal`.
 
 ## The look (family rules)
 

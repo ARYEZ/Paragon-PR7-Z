@@ -43,6 +43,32 @@ jobs:
       - name: Zip
         shell: pwsh
         run: Compress-Archive -Path dist/PR7-Z -DestinationPath "PR7-Z-${{ github.ref_name }}-windows-x64.zip".Replace('/', '-')
+      - name: Build the installer (Inno Setup)
+        shell: pwsh
+        run: |
+          $v = (Select-String -Path pr7z/__init__.py -Pattern '__version__ = "(.+)"').Matches[0].Groups[1].Value
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          & $iscc /DAppVersion=$v installer/pr7z.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed" }
+          "PR7Z_VERSION=$v" >> $env:GITHUB_ENV
+      - name: Test the installer (silent install, check, uninstall, check)
+        shell: pwsh
+        run: |
+          $p = Start-Process "dist/PR7-Z-Setup-$env:PR7Z_VERSION.exe" -Wait -PassThru `
+               -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/LOG=install.log"
+          if ($p.ExitCode -ne 0) { Get-Content install.log; throw "install failed: $($p.ExitCode)" }
+          python tools/verify_install.py installed
+          if ($LASTEXITCODE -ne 0) { Get-Content install.log; throw "install check failed" }
+          $p = Start-Process "$env:LOCALAPPDATA\Programs\PR7-Z\unins000.exe" -Wait -PassThru `
+               -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"
+          if ($p.ExitCode -ne 0) { throw "uninstall failed: $($p.ExitCode)" }
+          python tools/verify_install.py uninstalled
+          if ($LASTEXITCODE -ne 0) { throw "uninstall check failed" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PR7-Z-Setup
+          path: dist/PR7-Z-Setup-*.exe
       - uses: actions/upload-artifact@v4
         with:
           name: PR7-Z-windows-x64
@@ -51,5 +77,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: PR7-Z-*.zip
+          files: |
+            dist/PR7-Z-Setup-*.exe
+            PR7-Z-*.zip
           name: Paragon PR7-Z ${{ github.ref_name }}

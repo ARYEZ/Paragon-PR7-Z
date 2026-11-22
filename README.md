@@ -9,16 +9,17 @@ bzip2 and xz to create; ~50 formats to open (rar, iso, cab, dmg, vhd(x), zstd, m
 
 ## Install (Windows 10/11, x64)
 
-1. Download `PR7-Z-<version>-windows-x64.zip` from the repo's **Releases** (or the latest build's
-   artifact under **Actions**), unzip it anywhere (e.g. `C:\Tools\PR7-Z`), and run `PR7-Z.exe`.
-2. **Tools > Options**: tick *Integrate PR7-Z to shell context menu* for the Explorer right-click
-   menu (choose *Cascaded* and the items there, like 7-Zip's Options); *File types: Add* lists PR7-Z
-   under "Open with" for archives. Both are per-user (no admin rights) and unticking / *Remove* takes
-   them out again. Same from a terminal: `PR7-Z.exe --register` / `--unregister`.
-   (Windows 11 shows the menu under "Show more options", as it does 7-Zip's.)
-3. **Updating PR7-Z:** Explorer keeps the menu's DLL loaded, so unzip a new version to a new folder,
-   run its PR7-Z.exe and press OK in Tools > Options once (the menu then uses the new copy); the old
-   folder can be deleted after you sign out or restart Explorer.
+1. Download **`PR7-Z-Setup-<version>.exe`** from the repo's **Releases** (or the latest build's
+   *PR7-Z-Setup* artifact under **Actions**) and run it. No admin rights: it installs for your user
+   into `%LOCALAPPDATA%\Programs\PR7-Z` and adds PR7-Z to the Start menu.
+2. Leave **"Add PR7-Z to Explorer's right-click menu"** ticked (and "Open with" if you like). Right-click
+   any file: the PR7-Z menu is there (Windows 11: under "Show more options", like 7-Zip's).
+3. To update, run the newer setup over it. To remove: Settings > Apps > Installed apps > Paragon PR7-Z,
+   which also removes the menu.
+
+Change the menu any time in **Tools > Options** (cascaded or not, which items), as in 7-Zip's Options.
+There's also a portable zip (`PR7-Z-<version>-windows-x64.zip`): keep `PR7-Z.exe` and its `_internal`
+folder together, outside OneDrive, and turn the menu on in Tools > Options.
 
 ## Use
 
@@ -43,4 +44,6 @@ python -m pr7z            # or: python -m pr7z D:\Music\ELSEWORLD_Stems.7z
 ```
 
 Tests: `pip install -r requirements-dev.txt` then `python -m pytest` (on Linux set `PR7Z_7Z` to a
-`7zz` binary). Build the exe: `pyinstaller pr7z.spec` (CI does this on every push: `.github/workflows/build.yml`).
+`7zz` binary). Build: the menu DLL with CMake (`shellext/`), the exe with `pyinstaller pr7z.spec`, the
+installer with Inno Setup (`iscc /DAppVersion=x.y.z installer\pr7z.iss`). CI does all three on every push
+(`.github/workflows/build.yml`) and tests the installer.

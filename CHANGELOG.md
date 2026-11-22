@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0
+
+- Installer, `PR7-Z-Setup-<version>.exe` (Inno Setup): installs for the current user (no admin
+  rights) into %LOCALAPPDATA%\Programs\PR7-Z, adds a Start menu entry, and turns on the Explorer
+  right-click menu and "Open with" (both ticked by default; optional desktop shortcut). Shown in
+  Windows' Installed apps; uninstalling removes the menu and "Open with" too. Upgrades in place.
+- The menu DLL that Explorer loads is now a per-user copy named by its content
+  (%LOCALAPPDATA%\Paragon\PR7-Z\shellext\PR7ZShell-<hash>.dll), so updating PR7-Z never has to
+  overwrite a file Explorer has locked or restart Explorer, and the menu keeps working if the
+  program folder moves. Old copies are removed once Explorer lets go of them.
+- `--register-menu`, `--unregister-menu`, `--register-open-with`, `--unregister-open-with`.
+- CI installs the real setup silently, checks files, shortcut, uninstall entry, menu registration and
+  the installed DLL's menu, then uninstalls and checks everything is gone.
+
 ## 0.2.0
 
 - Explorer right-click menu like 7-Zip's, as a shell extension (`PR7ZShell.dll`, `shellext/`): Open

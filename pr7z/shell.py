@@ -113,6 +113,41 @@ def shell_dll() -> Path | None:
     return None
 
 
+def deploy_dir() -> Path:
+    return Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Paragon" / "PR7-Z" / "shellext"
+
+
+def deploy_dll(src: Path) -> Path:
+    """Copy the DLL to a per-user folder under a name that carries its content hash, and return it.
+
+    Explorer keeps a loaded shell extension locked until it restarts. Registering a copy (not the
+    file in PR7-Z's folder) means installing a new PR7-Z never has to overwrite a locked file or
+    restart Explorer: a new build is a new name. Old copies are removed when they're free."""
+    import hashlib
+    data = src.read_bytes()
+    dest = deploy_dir() / f"PR7ZShell-{hashlib.sha256(data).hexdigest()[:12]}.dll"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if not dest.exists():
+        tmp = dest.with_suffix(".tmp")
+        tmp.write_bytes(data)
+        tmp.replace(dest)
+    remove_old_dlls(keep=dest)
+    return dest
+
+
+def remove_old_dlls(keep: Path | None = None) -> list[Path]:
+    """Delete deployed copies other than `keep`; ones Explorer still has loaded stay (returned)."""
+    left = []
+    for f in deploy_dir().glob("PR7ZShell-*.dll"):
+        if keep is not None and f == keep:
+            continue
+        try:
+            f.unlink()
+        except OSError:
+            left.append(f)
+    return left
+
+
 def command_line() -> str:
     """How the DLL starts PR7-Z (it appends the action and the files)."""
     parts = launcher()
@@ -161,10 +196,12 @@ def register_menu():
         _notify()
         return
     _remove_static_menu(root)
+    deployed = deploy_dll(dll)
     s = read_settings()
     write_settings(s["cascaded"], s["items"])
     _set(root, rf"Software\Classes\CLSID\{CLSID}", {"": "PR7-Z Shell Extension"})
-    _set(root, rf"Software\Classes\CLSID\{CLSID}\InprocServer32", {"": str(dll), "ThreadingModel": "Apartment"})
+    _set(root, rf"Software\Classes\CLSID\{CLSID}\InprocServer32",
+         {"": str(deployed), "ThreadingModel": "Apartment"})
     for base in ("*", "Directory"):
         _set(root, rf"Software\Classes\{base}\shellex\ContextMenuHandlers\{HANDLER}", {"": CLSID})
     _set(root, r"Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved",
@@ -192,6 +229,7 @@ def unregister_menu():
         winreg.CloseKey(k)
     except OSError:
         pass
+    remove_old_dlls()  # a copy Explorer still holds is removed on the next register or uninstall
     _notify()
 
 

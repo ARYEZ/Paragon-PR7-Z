@@ -15,6 +15,7 @@
     pr7z --test ARCHIVES...           test, result window
     pr7z --hash[:METHOD] FILES...     checksums (CRC32, CRC64, XXH64, MD5, SHA1, SHA256, SHA512, BLAKE2sp, *)
     pr7z --register | --unregister    Explorer menu and "Open with" (this user only)
+    pr7z --register-menu | --unregister-menu | --register-open-with | --unregister-open-with   one of them
     ... --files-from LIST             read the FILES from LIST (UTF-8, one per line; deleted afterwards)
 
 The Explorer menu (PR7ZShell.dll) passes every selected file in one launch. The fallback registry
@@ -40,7 +41,9 @@ from . import __version__, engine, operations, theme
 ACTIONS = {"--open", "--add", "--add-email", "--add-7z", "--add-zip", "--extract", "--extract-here", "--extract-to",
            "--test", "--hash"}
 WITH_PARAM = {"--open-as", "--add-to", "--add-to-email", "--extract-into"}  # take one value before the files
-OTHER = {"--register", "--unregister", "--version", "--help"}
+REGISTER = {"--register", "--unregister", "--register-menu", "--unregister-menu", "--register-open-with",
+            "--unregister-open-with"}
+OTHER = REGISTER | {"--version", "--help"}
 HASH_METHODS = {"CRC32", "CRC64", "XXH64", "MD5", "SHA1", "SHA256", "SHA384", "SHA512", "SHA3-256", "BLAKE2sp", "*"}
 COLLECT_MS = 450
 
@@ -233,17 +236,22 @@ def main(argv: list[str] | None = None) -> int:
     if cmd.action == "--version":
         print(f"PR7-Z {__version__}")
         return 0
-    if cmd.action in ("--register", "--unregister"):
+    if cmd.action in REGISTER:  # used by the installer and uninstaller: no window, exit code only
         from . import shell
         if not shell.available():
             print("Explorer integration is for Windows.")
             return 1
-        if cmd.action == "--register":
-            shell.register_menu()
-            shell.register_open_with()
-        else:
-            shell.unregister_menu()
-            shell.unregister_open_with()
+        steps = {"--register": [shell.register_menu, shell.register_open_with],
+                 "--unregister": [shell.unregister_menu, shell.unregister_open_with],
+                 "--register-menu": [shell.register_menu], "--unregister-menu": [shell.unregister_menu],
+                 "--register-open-with": [shell.register_open_with],
+                 "--unregister-open-with": [shell.unregister_open_with]}[cmd.action]
+        try:
+            for step in steps:
+                step()
+        except OSError as e:
+            print(f"{cmd.action} failed: {e}")
+            return 2
         return 0
     app = make_app([sys.argv[0]])
     if cmd.action and cmd.action not in ("--open", "--open-as"):
