@@ -35,6 +35,22 @@ def value(path: str, name: str = ""):
         winreg.CloseKey(k)
 
 
+def has_value(path: str, name: str) -> bool:
+    """Whether the value exists. ("Open with" entries are empty REG_NONE values, which winreg reads as
+    None, so value() can't tell them from missing ones.)"""
+    try:
+        k = winreg.OpenKey(HKCU, path)
+    except OSError:
+        return False
+    try:
+        winreg.QueryValueEx(k, name)
+        return True
+    except OSError:
+        return False
+    finally:
+        winreg.CloseKey(k)
+
+
 def check(ok: bool, what: str, problems: list):
     print(("ok    " if ok else "FAIL  ") + what)
     if not ok:
@@ -59,7 +75,7 @@ def installed() -> list:
         check(Path(dll).read_bytes() == installed_dll.read_bytes(), "the copy is this build's DLL", p)
     cmd = value(shell.SETTINGS_KEY, "Command") or ""
     check(str(exe).lower() in cmd.lower(), f"menu starts the installed PR7-Z ({cmd})", p)
-    check(value(r"Software\Classes\.7z\OpenWithProgids", shell.PROGID) is not None, '"Open with" for .7z', p)
+    check(has_value(r"Software\Classes\.7z\OpenWithProgids", shell.PROGID), '"Open with" for .7z', p)
     if dll and Path(dll).is_file():
         arc = Path(tempfile.mkdtemp()) / "Stems.7z"
         arc.write_bytes(b"7z")
@@ -84,7 +100,7 @@ def uninstalled() -> list:
         check(value(UNINSTALL, "DisplayName") is None, "Installed apps entry removed", p)
         check(value(rf"Software\Classes\*\shellex\ContextMenuHandlers\{shell.HANDLER}") is None, "menu removed", p)
         check(value(rf"Software\Classes\CLSID\{shell.CLSID}\InprocServer32") is None, "DLL registration removed", p)
-        check(value(r"Software\Classes\.7z\OpenWithProgids", shell.PROGID) is None, '"Open with" removed', p)
+        check(not has_value(r"Software\Classes\.7z\OpenWithProgids", shell.PROGID), '"Open with" removed', p)
         check(not list(shell.deploy_dir().glob("PR7ZShell-*.dll")), "the DLL copy removed", p)
         if not p or time.time() > deadline:
             return p
