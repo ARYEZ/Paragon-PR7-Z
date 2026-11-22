@@ -337,7 +337,8 @@ def extract_args(exe: str, archive: str, out_dir: str, o: ExtractOptions, items:
         a.append("-spe")
     if o.keep_broken:
         a.append("-kb")
-    a.append(f"-p{o.password}" if o.password else f"-p{NO_PASSWORD}")
+    if o.password:  # no -p: if the archive is encrypted 7z asks, and PR7-Z's password dialog answers
+        a.append(f"-p{o.password}")
     if items or list_file:
         a.append("-spd")  # names are literal, no wildcards
     a += ["--", archive]
@@ -346,7 +347,7 @@ def extract_args(exe: str, archive: str, out_dir: str, o: ExtractOptions, items:
 
 
 def test_args(exe: str, archive: str, password: str = "") -> list[str]:
-    return [exe, "t", *BASE_SWITCHES, f"-p{password or NO_PASSWORD}", "--", archive]
+    return [exe, "t", *BASE_SWITCHES, *([f"-p{password}"] if password else []), "--", archive]
 
 
 def delete_args(exe: str, archive: str, items: list[str], password: str = "") -> list[str]:

@@ -140,6 +140,14 @@ QCheckBox::indicator:checked, QRadioButton::indicator:checked {{ background: {li
 QCheckBox::indicator:hover, QRadioButton::indicator:hover {{ border: 1px solid {TEXT}; }}
 
 /* The file list: selected row = family gradient @.22 with a gradient border. */
+QTableView, QListView {{ background: {BACKGROUND}; alternate-background-color: #09070A; border: 1px solid {PANEL_EDGE};
+              border-radius: 6px; gridline-color: {PANEL_EDGE}; }}
+QTableView::item, QListView::item {{ padding: 4px 6px; }}
+QTableView::item:selected, QListView::item:selected {{ background: {qss_gradient(LIT, 0.22)}; color: #FFFFFF; }}
+QTableCornerButton::section {{ background: {TAB_FRAME}; border: none; }}
+QPlainTextEdit, QTextEdit {{ background: {WIDGET}; border: 1px solid {PANEL_EDGE}; border-radius: 6px; padding: 6px;
+              font-family: "Consolas", "Cascadia Mono", "DejaVu Sans Mono", monospace; font-size: 12px;
+              selection-background-color: {ACCENT_DIM}; }}
 QTreeView {{ background: {BACKGROUND}; alternate-background-color: #09070A; border: 1px solid {PANEL_EDGE};
               border-radius: 6px; padding: 2px; }}
 QTreeView::item {{ height: 24px; padding: 0 4px; border: 1px solid transparent; }}
@@ -163,6 +171,10 @@ QGroupBox {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {DOCK_TO
               font-size: 12.5px; font-weight: 600; }}
 QGroupBox::title {{ subcontrol-origin: margin; left: 4px; top: 2px; color: rgba(232,232,234,0.9); }}
 QLabel[role="dim"] {{ color: {TEXT_DIM}; }}
+QLabel[role="value"] {{ color: #FFFFFF; font-size: 13px; }}
+QLabel[role="heading"] {{ font-size: 16px; font-weight: 600; }}
+QLabel[role="error"] {{ color: {METER_RED}; }}
+QLabel[role="ok"] {{ color: {LED_ORANGE}; font-weight: 600; }}
 QLabel[role="field"] {{ color: {TEXT_DIM}; font-size: 10.5px; font-weight: 600; }}
 
 QStatusBar {{ background: {TAB_FRAME}; border-top: 1px solid {PANEL_EDGE}; color: {TEXT_DIM}; font-size: 12px; }}

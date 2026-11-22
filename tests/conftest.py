@@ -32,9 +32,13 @@ def tree(tmp_path):
 
 
 @pytest.fixture(scope="session")
-def qapp():
+def qapp(tmp_path_factory):
+    from PySide6.QtCore import QSettings
     from PySide6.QtWidgets import QApplication
     from pr7z import theme
+    # Tests must never touch the real PR7-Z settings.
+    QSettings.setDefaultFormat(QSettings.IniFormat)
+    QSettings.setPath(QSettings.IniFormat, QSettings.UserScope, str(tmp_path_factory.mktemp("settings")))
     app = QApplication.instance() or QApplication([])
     theme.load_fonts()
     app.setStyleSheet(theme.stylesheet())
