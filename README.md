@@ -11,10 +11,14 @@ bzip2 and xz to create; ~50 formats to open (rar, iso, cab, dmg, vhd(x), zstd, m
 
 1. Download `PR7-Z-<version>-windows-x64.zip` from the repo's **Releases** (or the latest build's
    artifact under **Actions**), unzip it anywhere (e.g. `C:\Tools\PR7-Z`), and run `PR7-Z.exe`.
-2. **Tools > Options**: *Add to Explorer* puts a PR7-Z submenu on Explorer's right-click menu; *File
-   types: Add* lists PR7-Z under "Open with" for archives. Both are per-user (no admin rights) and
-   *Remove* takes them out again. Same from a terminal: `PR7-Z.exe --register` / `--unregister`.
-   (Windows 11 shows the submenu under "Show more options".)
+2. **Tools > Options**: tick *Integrate PR7-Z to shell context menu* for the Explorer right-click
+   menu (choose *Cascaded* and the items there, like 7-Zip's Options); *File types: Add* lists PR7-Z
+   under "Open with" for archives. Both are per-user (no admin rights) and unticking / *Remove* takes
+   them out again. Same from a terminal: `PR7-Z.exe --register` / `--unregister`.
+   (Windows 11 shows the menu under "Show more options", as it does 7-Zip's.)
+3. **Updating PR7-Z:** Explorer keeps the menu's DLL loaded, so unzip a new version to a new folder,
+   run its PR7-Z.exe and press OK in Tools > Options once (the menu then uses the new copy); the old
+   folder can be deleted after you sign out or restart Explorer.
 
 ## Use
 
@@ -26,9 +30,10 @@ combine files, flat view, benchmark. Drop files on an open archive to add them t
 in; drag items out to extract them; edit a file inside an archive and PR7-Z offers to update the
 archive when you save. Help > Contents (F1) lists it all.
 
-Explorer menu: Open archive, Extract files..., Extract Here, Extract to "<name>\", Test archive,
-Add to archive..., Add to "<name>.7z" / "<name>.zip", CRC SHA. Several selected files go to one
-dialog.
+Explorer menu (like 7-Zip's): Open archive, Open archive >, Extract files..., Extract Here,
+Extract to "name\", Test archive, Add to archive..., Compress and email..., Add to "name.7z" /
+"name.zip", Compress to ... and email, CRC SHA >. The names are the real ones; all selected files go
+to one dialog.
 
 ## Run from source
 

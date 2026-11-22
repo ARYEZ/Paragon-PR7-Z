@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.0
+
+- Explorer right-click menu like 7-Zip's, as a shell extension (`PR7ZShell.dll`, `shellext/`): Open
+  archive, Open archive > (*, #, #:e, 7z, zip, cab, rar, iso, tar, wim), Extract files..., Extract Here,
+  Extract to "name\", Test archive, Add to archive..., Compress and email..., Add to "name.7z" /
+  "name.zip", Compress to "name.7z" / "name.zip" and email, CRC SHA > (CRC-32 ... SHA-512, BLAKE2sp, *).
+  Real file names in the items, 7-Zip's "_2" when a name is taken, extract/test items only on
+  archives, every selected file in one launch (a list file for very large selections).
+- Tools > Options: "Integrate PR7-Z to shell context menu", "Cascaded context menu" and a checkbox per
+  menu item, as on 7-Zip's 7-Zip tab. The basic fixed-text menu remains when the DLL isn't present.
+- Compress and email (Simple MAPI: the default email program opens with the archive attached).
+- Open a file as a chosen archive type (`--open-as`, 7-Zip's -t); extract and test keep the type.
+- New command-line actions: --add-to, --add-to-email, --add-email, --extract-into, --open-as,
+  --hash:METHOD, --files-from.
+
 ## 0.1.0
 
 First version.

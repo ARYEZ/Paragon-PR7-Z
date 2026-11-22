@@ -6,14 +6,19 @@ from pathlib import Path
 root = Path(SPECPATH)
 version = re.search(r'__version__ = "([^"]+)"', (root / "pr7z" / "__init__.py").read_text()).group(1)
 
+datas = [
+    (str(root / "pr7z" / "fonts"), "pr7z/fonts"),
+    (str(root / "pr7z" / "icons"), "pr7z/icons"),
+    (str(root / "engine"), "engine"),
+]
+dll = root / "shellext" / "build" / "Release" / "PR7ZShell.dll"  # the Explorer menu (built by CMake first)
+if dll.exists():
+    datas.append((str(dll), "shellext"))
+
 a = Analysis(
     [str(root / "tools" / "launcher.py")],
     pathex=[str(root)],
-    datas=[
-        (str(root / "pr7z" / "fonts"), "pr7z/fonts"),
-        (str(root / "pr7z" / "icons"), "pr7z/icons"),
-        (str(root / "engine"), "engine"),
-    ],
+    datas=datas,
     hiddenimports=["psutil"],
     excludes=["tkinter", "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets", "PySide6.QtQml",
               "PySide6.QtQuick", "PySide6.Qt3DCore", "PySide6.QtMultimedia", "PySide6.QtPdf"],

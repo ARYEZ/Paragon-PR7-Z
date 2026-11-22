@@ -230,6 +230,7 @@ class ArchiveLocation:
     password: str | None = None
     outer: object = None         # the location the archive was opened from
     flat: bool = False
+    archive_type: str = ""       # 7-Zip's -t type when opened with "Open archive >" (else by extension)
 
     def entries(self, show_hidden=True) -> list[Entry]:
         return self.tree.flat(self.inner) if self.flat else self.tree.list(self.inner)
@@ -246,7 +247,7 @@ class ArchiveLocation:
 
     def at(self, inner: str) -> "ArchiveLocation":
         return ArchiveLocation(self.archive, self.display_archive, self.tree, inner.strip("/"), self.password,
-                               self.outer, False)
+                               self.outer, False, self.archive_type)
 
     def parent(self):
         if self.inner:

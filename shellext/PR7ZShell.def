@@ -1,0 +1,5 @@
+LIBRARY PR7ZShell
+EXPORTS
+    DllGetClassObject PRIVATE
+    DllCanUnloadNow PRIVATE
+    PR7Z_SelfTest

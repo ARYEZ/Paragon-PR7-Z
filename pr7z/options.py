@@ -1,8 +1,9 @@
-"""Tools > Options: Explorer integration, file types, view and editor settings."""
+"""Tools > Options: the Explorer menu (7-Zip's "7-Zip" tab), file types, view and editor settings."""
 
 from __future__ import annotations
 
-from PySide6.QtWidgets import QCheckBox, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import (QCheckBox, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+                               QVBoxLayout)
 
 from . import shell
 from .dialogs import ParagonDialog, field_label, message
@@ -10,27 +11,37 @@ from .dialogs import ParagonDialog, field_label, message
 
 class OptionsDialog(ParagonDialog):
     def __init__(self, window):
-        super().__init__("Options", "OPTIONS", window, 620)
+        super().__init__("Options", "OPTIONS", window, 680)
         self.win = window
         s = window.settings
+        ok = shell.available()
+        state = shell.read_settings()
 
-        exp = QGroupBox("EXPLORER")
-        el = QVBoxLayout(exp)
-        self.menu_state = QLabel()
-        self.menu_state.setProperty("role", "dim")
-        el.addWidget(QLabel("Add a PR7-Z submenu to Explorer's right-click menu: Open, Extract files, Extract Here, "
-                            "Extract to folder, Test, Add to archive, Add to .7z / .zip, CRC SHA."))
-        el.addWidget(self.menu_state)
-        row = QHBoxLayout()
-        self.menu_add = QPushButton("Add to Explorer")
-        self.menu_remove = QPushButton("Remove")
-        self.menu_add.clicked.connect(lambda: self._do(shell.register_menu))
-        self.menu_remove.clicked.connect(lambda: self._do(shell.unregister_menu))
-        row.addWidget(self.menu_add)
-        row.addWidget(self.menu_remove)
-        row.addStretch(1)
-        el.addLayout(row)
-        self.body.addWidget(exp)
+        menu = QGroupBox("EXPLORER CONTEXT MENU")
+        ml = QVBoxLayout(menu)
+        self.integrate = QCheckBox("Integrate PR7-Z to shell context menu")
+        self.integrate.setChecked(bool(shell.menu_registered()))
+        self.cascaded = QCheckBox("Cascaded context menu")
+        self.cascaded.setChecked(state["cascaded"])
+        ml.addWidget(self.integrate)
+        ml.addWidget(self.cascaded)
+        self.kind = QLabel()
+        self.kind.setProperty("role", "dim")
+        self.kind.setWordWrap(True)
+        ml.addWidget(self.kind)
+        ml.addWidget(field_label("Context menu items"))
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(24)
+        self.items: list[QCheckBox] = []
+        half = (len(shell.MENU_ITEMS) + 1) // 2
+        for i, name in enumerate(shell.MENU_ITEMS):
+            c = QCheckBox(name)
+            c.setChecked(bool(state["items"] >> i & 1))
+            self.items.append(c)
+            grid.addWidget(c, i % half, i // half)
+        ml.addLayout(grid)
+        self.integrate.toggled.connect(self._enable)
+        self.body.addWidget(menu)
 
         types = QGroupBox("FILE TYPES")
         tl = QVBoxLayout(types)
@@ -62,17 +73,30 @@ class OptionsDialog(ParagonDialog):
 
         self.add_button("OK", self._ok, default=True)
         self.add_button("Cancel", self.reject)
+        if not ok:
+            for w in [self.integrate, self.cascaded, self.types_add, self.types_remove, *self.items]:
+                w.setEnabled(False)
         self._refresh()
+        self._enable(self.integrate.isChecked())
+
+    def _enable(self, on: bool):
+        has_dll = shell.shell_dll() is not None
+        for w in [self.cascaded, *self.items]:
+            w.setEnabled(on and shell.available() and has_dll)
 
     def _refresh(self):
-        ok = shell.available()
-        for b in (self.menu_add, self.menu_remove, self.types_add, self.types_remove):
-            b.setEnabled(ok)
-        if not ok:
-            self.menu_state.setText("Available on Windows.")
+        if not shell.available():
+            self.kind.setText("Available on Windows.")
             self.types_state.setText("Available on Windows.")
             return
-        self.menu_state.setText("Added." if shell.menu_registered() else "Not added.")
+        kind = shell.menu_registered()
+        if shell.shell_dll() is None:
+            self.kind.setText("The menu extension (PR7ZShell.dll) isn't in this copy of PR7-Z, so a basic menu with "
+                              "fixed names is used. The release build includes it.")
+        else:
+            self.kind.setText({"extension": "On. Changes apply on the next right-click.",
+                               "basic": "The basic menu is on; OK switches it to the full menu.",
+                               "": "Off."}[kind])
         self.types_state.setText("Added." if shell.open_with_registered() else "Not added.")
 
     def _do(self, f):
@@ -82,9 +106,23 @@ class OptionsDialog(ParagonDialog):
             message(self, "Options", str(e))
         self._refresh()
 
+    def items_mask(self) -> int:
+        return sum(1 << i for i, c in enumerate(self.items) if c.isChecked())
+
     def _ok(self):
+        if shell.available():
+            try:
+                if self.integrate.isChecked():
+                    shell.write_settings(self.cascaded.isChecked(), self.items_mask())
+                    shell.register_menu()
+                elif shell.menu_registered():
+                    shell.unregister_menu()
+            except OSError as e:
+                message(self, "Options", str(e))
+                return
         self.win.settings.setValue("editor", self.editor.text().strip())
         if self.hidden.isChecked() != self.win.show_hidden:
             self.win.hidden_act.setChecked(self.hidden.isChecked())
             self.win._toggle_hidden()
         self.accept()
+

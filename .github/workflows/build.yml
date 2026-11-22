@@ -21,7 +21,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
-      - name: Tests (against the bundled 7z.exe)
+      - name: Build the Explorer menu (PR7ZShell.dll)
+        run: |
+          cmake -S shellext -B shellext/build -A x64
+          cmake --build shellext/build --config Release
+      - name: Tests (against the bundled 7z.exe and the built PR7ZShell.dll)
         env:
           QT_QPA_PLATFORM: offscreen
         run: python -m pytest -q
@@ -31,7 +35,8 @@ jobs:
         shell: pwsh
         run: |
           foreach ($f in "dist/PR7-Z/PR7-Z.exe", "dist/PR7-Z/_internal/engine/7z.exe", "dist/PR7-Z/_internal/engine/7z.dll",
-                         "dist/PR7-Z/_internal/engine/7z.sfx", "dist/PR7-Z/_internal/pr7z/fonts/Inter-Regular.ttf") {
+                         "dist/PR7-Z/_internal/engine/7z.sfx", "dist/PR7-Z/_internal/pr7z/fonts/Inter-Regular.ttf",
+                         "dist/PR7-Z/_internal/shellext/PR7ZShell.dll") {
             if (-not (Test-Path $f)) { throw "missing $f" }
           }
           Copy-Item README.md, NOTICE.md dist/PR7-Z/

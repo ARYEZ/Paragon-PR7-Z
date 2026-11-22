@@ -225,9 +225,16 @@ def _classify(out: str) -> ArchiveError:
     return ArchiveError(msg, "error", out)
 
 
-def list_archive(archive: str, password: str | None = None, exe: str | None = None) -> ArchiveInfo:
+def type_switch(archive_type: str) -> list[str]:
+    """7-Zip's 'open as' type: '' (by extension and signature), '*', '#', '#:e', '7z', 'zip' ..."""
+    return [f"-t{archive_type}"] if archive_type else []
+
+
+def list_archive(archive: str, password: str | None = None, exe: str | None = None,
+                 archive_type: str = "") -> ArchiveInfo:
     exe = exe or find_7z()
-    args = [exe, "l", "-slt", "-sccUTF-8", f"-p{password if password is not None else NO_PASSWORD}", "--", archive]
+    args = [exe, "l", "-slt", "-sccUTF-8", *type_switch(archive_type),
+            f"-p{password if password is not None else NO_PASSWORD}", "--", archive]
     r = _run(args)
     out = r.stdout.decode("utf-8", "replace").replace("\r\n", "\n")
     if r.returncode not in (0, 1) or "----------" not in out:
@@ -321,6 +328,7 @@ class ExtractOptions:
     password: str = ""
     eliminate_root: bool = False   # 7-Zip's "Eliminate duplication of root folder" (-spe)
     keep_broken: bool = False
+    archive_type: str = ""         # set when the archive was opened as a type (Open archive >)
 
 
 OVERWRITE_SWITCHES = {"ask": [], "overwrite": ["-aoa"], "skip": ["-aos"], "rename": ["-aou"],
@@ -330,7 +338,7 @@ OVERWRITE_SWITCHES = {"ask": [], "overwrite": ["-aoa"], "skip": ["-aos"], "renam
 def extract_args(exe: str, archive: str, out_dir: str, o: ExtractOptions, items: list[str] | None = None,
                  list_file: str | None = None) -> list[str]:
     cmd = "e" if o.path_mode == "none" else "x"
-    a = [exe, cmd, *BASE_SWITCHES, f"-o{out_dir}", *OVERWRITE_SWITCHES[o.overwrite]]
+    a = [exe, cmd, *BASE_SWITCHES, *type_switch(o.archive_type), f"-o{out_dir}", *OVERWRITE_SWITCHES[o.overwrite]]
     if o.path_mode == "absolute":
         a.append("-spf")
     if o.eliminate_root:
@@ -346,8 +354,9 @@ def extract_args(exe: str, archive: str, out_dir: str, o: ExtractOptions, items:
     return a
 
 
-def test_args(exe: str, archive: str, password: str = "") -> list[str]:
-    return [exe, "t", *BASE_SWITCHES, *([f"-p{password}"] if password else []), "--", archive]
+def test_args(exe: str, archive: str, password: str = "", archive_type: str = "") -> list[str]:
+    return [exe, "t", *BASE_SWITCHES, *type_switch(archive_type), *([f"-p{password}"] if password else []),
+            "--", archive]
 
 
 def delete_args(exe: str, archive: str, items: list[str], password: str = "") -> list[str]:

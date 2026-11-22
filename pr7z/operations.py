@@ -32,7 +32,7 @@ def extract_steps(exe: str, archive: str, out_dir: str, opts: ExtractOptions, it
 
     stage = Path(out_dir) / f".pr7z-{uuid.uuid4().hex[:8]}"
     inner = ExtractOptions(path_mode="full", overwrite="overwrite", password=opts.password,
-                           keep_broken=opts.keep_broken)
+                           keep_broken=opts.keep_broken, archive_type=opts.archive_type)
     sel = items or [base]
 
     def move_up(job: Job):
@@ -179,8 +179,8 @@ def _format_of(exe: str, archive: str) -> str:
 
 
 # --------------------------------------------------------------------------- the rest
-def test_steps(exe: str, archives: list[str], password: str = "") -> list[Step]:
-    return [Step(f"Testing {Path(a).name}", engine.test_args(exe, a, password)) for a in archives]
+def test_steps(exe: str, archives: list[str], password: str = "", archive_type: str = "") -> list[Step]:
+    return [Step(f"Testing {Path(a).name}", engine.test_args(exe, a, password, archive_type)) for a in archives]
 
 
 def delete_steps(exe: str, archive: str, items: list[str], password: str = "") -> list[Step]:

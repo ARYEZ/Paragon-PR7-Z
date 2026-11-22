@@ -142,7 +142,7 @@ class FileView(QTreeView):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, start: str | None = None):
+    def __init__(self, start: str | None = None, archive_type: str = ""):
         super().__init__()
         self.settings = QSettings(QSettings.defaultFormat(), QSettings.UserScope, "Paragon", "PR7-Z")
         self.resize(self.settings.value("size", QSize(1280, 760)))
@@ -220,6 +220,9 @@ class MainWindow(QMainWindow):
         self.setStatusBar(sb)
 
         self._build_menus()
+        if start and archive_type and Path(start).is_file():  # "Open archive >" from Explorer
+            if self.open_archive(start, archive_type=archive_type):
+                return
         self.navigate(start or self.settings.value("last_folder", str(Path.home())))
 
     # ================================================================ navigation
@@ -413,11 +416,12 @@ class MainWindow(QMainWindow):
         if paths:
             self._shell_open(paths[0])
 
-    def open_archive(self, path: str, display: str | None = None, outer=None, quiet: bool = False) -> bool:
+    def open_archive(self, path: str, display: str | None = None, outer=None, quiet: bool = False,
+                     archive_type: str = "") -> bool:
         password = None
         while True:
             try:
-                info = engine.list_archive(path, password, self.exe)
+                info = engine.list_archive(path, password, self.exe, archive_type)
                 break
             except engine.ArchiveError as e:
                 if e.kind == "password":
@@ -435,13 +439,13 @@ class MainWindow(QMainWindow):
         if outer is None:
             outer = FsLocation(str(Path(path).parent))
         loc = ArchiveLocation(archive=path, display_archive=display or str(Path(path)), tree=ArchiveTree(info),
-                              password=password, outer=outer)
+                              password=password, outer=outer, archive_type=archive_type)
         return self._set_location(loc)
 
     def _reload_archive(self):
         loc = self.loc
         try:
-            info = engine.list_archive(loc.archive, loc.password, self.exe)
+            info = engine.list_archive(loc.archive, loc.password, self.exe, loc.archive_type)
         except engine.ArchiveError as e:
             message(self, "PR7-Z", str(e))
             return
@@ -486,7 +490,7 @@ class MainWindow(QMainWindow):
         root = self._archive_temp()
         if flat_base:
             root = root / f"drag-{os.urandom(3).hex()}"
-        opts = ExtractOptions(overwrite="overwrite", password=loc.password or "")
+        opts = ExtractOptions(overwrite="overwrite", password=loc.password or "", archive_type=loc.archive_type)
         steps = operations.extract_steps(self.exe, loc.archive, str(root), opts, [e.path for e in entries],
                                          base=loc.inner if flat_base else "")
         res = run_job(Job("Extracting", steps), self, password_hint=loc.display_archive)
@@ -562,6 +566,7 @@ class MainWindow(QMainWindow):
             if d.exec() != ExtractDialog.Accepted:
                 return
             opts = d.options()
+            opts.archive_type = loc.archive_type
             if opts.password:
                 loc.password = opts.password
             self._extract_history(d.destination())
@@ -606,7 +611,8 @@ class MainWindow(QMainWindow):
     def do_test(self):
         if isinstance(self.loc, ArchiveLocation):
             run_job(Job(f"Testing {Path(self.loc.display_archive).name}",
-                        operations.test_steps(self.exe, [self.loc.archive], self.loc.password or "")), self,
+                        operations.test_steps(self.exe, [self.loc.archive], self.loc.password or "",
+                                              self.loc.archive_type)), self,
                     keep_open=True, password_hint=self.loc.display_archive)
             return
         archives = [e.path for e in self.targets() if e.kind not in ("folder", "drive")]
@@ -624,7 +630,8 @@ class MainWindow(QMainWindow):
             if d.exec() != CopyDialog.Accepted or not self._need_password(sel):
                 return
             steps = operations.extract_steps(self.exe, loc.archive, d.dest.text(),
-                                             ExtractOptions(password=loc.password or ""), [e.path for e in sel],
+                                             ExtractOptions(password=loc.password or "",
+                                                            archive_type=loc.archive_type), [e.path for e in sel],
                                              base=loc.inner)
             run_job(Job("Copying", steps), self, sum(e.size or 0 for e in sel))
             return

@@ -131,8 +131,10 @@ def test_tree_fills_implied_folders():
 
 def test_cli_parse():
     from pr7z.app import parse
-    assert parse(["--extract-here", "a.7z", "b.zip"]) == ("--extract-here", ["a.7z", "b.zip"])
-    assert parse(["D:/x"]) == (None, ["D:/x"])
+    c = parse(["--extract-here", "a.7z", "b.zip"])
+    assert (c.action, c.paths) == ("--extract-here", ["a.7z", "b.zip"])
+    c = parse(["D:/x"])
+    assert (c.action, c.paths) == (None, ["D:/x"])
     with pytest.raises(SystemExit):
         parse(["--nope"])
 

@@ -28,7 +28,17 @@ The owner writes Python; explain the why of changes.
   totals folder sizes), `main_window.py` (the window; `EntryModel` is a plain Python list model: **don't
   go back to QStandardItemModel**, its item ownership crashed PySide on `clear()`), `dialogs.py`,
   `add_dialog.py`, `options.py`, `shell.py` (Explorer menu and Open with, HKCU only), `app.py` (CLI and
-  the collector that merges Explorer's one-process-per-file launches).
+  the collector that merges the basic menu's one-process-per-file launches), `mail.py` (Compress and email).
+- **The Explorer menu is `shellext/PR7ZShell.cpp`** (the one C++ part; a shell extension like 7-Zip's
+  7-zip.dll, CLSID {ED2155D5-4754-4F17-A401-780852864C71}: never change it). Explorer loads it into its own
+  process, so it stays small and does no file work: it builds the menu (names by the same rules as
+  `default_extract_dir` / `default_archive_name`, keep them in step) and starts PR7-Z with an action
+  (`--add-to`, `--extract-into` ...; `--files-from` for huge selections). Settings in
+  `HKCU\Software\Paragon\PR7-Z\Shell` (Command, Icon, Cascaded, Items bit mask in `enum Item` order =
+  `shell.MENU_ITEMS`). Build: `cmake -S shellext -B shellext/build -A x64 && cmake --build shellext/build
+  --config Release` (CI does it); a syntax check here: `x86_64-w64-mingw32-g++ -std=c++17 -Wall -Wextra
+  -shared ...`. Tests drive the real COM path through its `PR7Z_SelfTest` export (tests/test_shell_menu.py,
+  Windows only) and split each command line with `CommandLineToArgvW`.
 
 ## The look (family rules)
 
