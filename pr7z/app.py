@@ -209,14 +209,21 @@ def run_action(cmd: Command) -> int:
         for a in paths:
             steps += operations.extract_steps(exe, a, dest.replace("*", Path(operations.default_extract_dir(a)).name),
                                               opts)
-        return 0 if run_job(Job("Extracting", steps)).ok else 2
+        ok = run_job(Job("Extracting", steps)).ok
+        if ok:
+            show_extracted([dest.replace("*", Path(operations.default_extract_dir(a)).name) for a in paths])
+        return 0 if ok else 2
     if action in ("--extract-here", "--extract-to", "--extract-into"):
-        steps = []
+        steps, outs = [], []
         for a in paths:
             out = {"--extract-here": str(Path(a).parent), "--extract-to": operations.default_extract_dir(a),
                    "--extract-into": cmd.param}[action]
+            outs.append(out)
             steps += operations.extract_steps(exe, a, out, ExtractOptions())
-        return 0 if run_job(Job("Extracting", steps)).ok else 2
+        ok = run_job(Job("Extracting", steps)).ok
+        if ok and action != "--extract-here":  # "here" is the folder you're already looking at
+            show_extracted(outs)
+        return 0 if ok else 2
     if action == "--test":
         return 0 if run_job(Job("Testing", operations.test_steps(exe, paths)), keep_open=True).ok else 2
     if action == "--hash":
@@ -225,6 +232,20 @@ def run_action(cmd: Command) -> int:
         TextDialog("Checksum information", "CHECKSUM", "\n".join(_hash_lines(res.log))).exec()
         return 0 if res.ok else 2
     return 7
+
+
+def show_extracted(folders: list[str], launch=None) -> list[str]:
+    """The family link: when PR7-E is the folder app ("Use PR7-E for Folders"), extracted folders open in it.
+    Otherwise nothing opens, as in 7-Zip. Returns the folders opened (at most three)."""
+    from . import family
+    if not family.pr7e_for_folders():
+        return []
+    shown = []
+    for f in dict.fromkeys(folders):          # each once, in order
+        if os.path.isdir(f) and len(shown) < 3:
+            (launch or family.launch)("PR7-E", [f])
+            shown.append(f)
+    return shown
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -272,6 +293,8 @@ def main(argv: list[str] | None = None) -> int:
     w = MainWindow(cmd.paths[0] if cmd.paths else None,
                    archive_type=cmd.param if cmd.action == "--open-as" else "")
     w.show()
+    from . import update_ui
+    update_ui.start(w)  # a check for updates, once a day
     return app.exec()
 
 

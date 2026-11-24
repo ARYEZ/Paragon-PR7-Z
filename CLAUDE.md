@@ -49,6 +49,8 @@ The owner writes Python; explain the why of changes.
   PR7ZShell-<sha256[:12]>.dll. Explorer locks the DLL it has loaded; registering a content-named copy
   means installs never overwrite a locked file or restart Explorer. Don't register the file in `_internal`.
 
+- Updates: `pr7z/updates.py` (no Qt; GitHub's public releases/latest, User-Agent names only the app, installer asset `PR7-Z-Setup-*.exe`, run with /SILENT /relaunch=1) and `update_ui.py` (once-a-day check from app.py, the menu's Check for Updates, UpdateDialog; settings updates/auto|last|skip; `notify` for tests). The installer's [Code] Relaunch starts PR7-Z again only for /relaunch=1. Same files in every family app (PR7-W's update_ui imports PyQt6): keep them in step. `family.py`: the other family apps by their permanent AppIds (uninstall InstallLocation).
+
 ## The look (family rules)
 
 - From Paragon Photo's `docs/paragon-finish-spec.md` (extracted from the PR7 plugins). OBSIDIAN is the

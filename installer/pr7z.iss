@@ -63,6 +63,15 @@ Filename: "{app}\PR7-Z.exe"; Parameters: "--unregister-menu"; Tasks: not context
 Filename: "{app}\PR7-Z.exe"; Parameters: "--register-open-with"; Tasks: openwith; Flags: runhidden waituntilterminated; StatusMsg: "Adding PR7-Z to ""Open with""..."
 Filename: "{app}\PR7-Z.exe"; Parameters: "--unregister-open-with"; Tasks: not openwith; Flags: runhidden waituntilterminated
 Filename: "{app}\PR7-Z.exe"; Description: "{cm:LaunchProgram,Paragon PR7-Z}"; Flags: nowait postinstall skipifsilent
+; Updates (Check for Updates runs this installer with /SILENT /relaunch=1): start PR7-Z again when done.
+Filename: "{app}\PR7-Z.exe"; Flags: nowait runasoriginaluser; Check: Relaunch
 
 [UninstallRun]
 Filename: "{app}\PR7-Z.exe"; Parameters: "--unregister"; Flags: runhidden waituntilterminated; RunOnceId: "PR7ZUnregister"
+
+[Code]
+// True only when the updater asked for it (/relaunch=1): normal and CI installs behave as before.
+function Relaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:relaunch|0}') = '1';
+end;

@@ -963,7 +963,12 @@ class MainWindow(QMainWindow):
         m = bar.addMenu("&Help")
         self._act(m, "&Contents...", self.show_help, "F1")
         m.addSeparator()
+        self._act(m, "Check for &Updates...", self.check_updates)
         self._act(m, "&About PR7-Z...", lambda: AboutDialog(self, engine_version(self.exe)).exec())
+
+    def check_updates(self):
+        from . import update_ui
+        update_ui.check(self)
 
     def _update_actions(self):
         for a in getattr(self, "_actions", []):

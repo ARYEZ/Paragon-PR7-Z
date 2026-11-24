@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0
+
+- **Check for updates**: a few seconds after starting (at most once a day) PR7-Z asks GitHub whether a newer release is out; if so, a note offers What's new, Install Now (downloads with progress, installs over this copy, and PR7-Z reopens), Later or Skip This Version. "Help > Check for Updates" checks by hand. Only the app's name is sent.
+- When PR7-E is the folder app (its "Use PR7-E for Folders"), Extract and Extract to "...\" open the extracted folder in PR7-E; otherwise nothing opens, as in 7-Zip.
+
 ## 0.3.0
 
 - Installer, `PR7-Z-Setup-<version>.exe` (Inno Setup): installs for the current user (no admin
