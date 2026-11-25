@@ -12,10 +12,10 @@ from pathlib import Path
 
 from PySide6.QtCore import QAbstractTableModel, QMimeData, QModelIndex, QPointF, QRectF, QSettings, QSize, QSortFilterProxyModel, Qt, QTimer, QUrl
 from PySide6.QtGui import QAction, QDesktopServices, QDrag, QKeySequence, QPainter, QPen, QShortcut
-from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QFileDialog, QHBoxLayout, QHeaderView,
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QFileDialog, QHBoxLayout, QHeaderView,
                                QLabel, QMainWindow, QMenu, QStatusBar, QTreeView, QVBoxLayout, QWidget)
 
-from . import engine, family, operations, theme
+from . import engine, family, finish, operations, theme
 from .add_dialog import AddDialog
 from .dialogs import (AboutDialog, CopyDialog, ExtractDialog, HistoryDialog, PasswordDialog, PropertiesDialog,
                       TextDialog, ask_text, confirm, engine_version, fmt_size, message, run_job)
@@ -893,6 +893,20 @@ class MainWindow(QMainWindow):
         self._fs_copy(paths, move, dest=loc.path)
 
     # ================================================================ menus
+    def set_finish(self, name: str):
+        """OBSIDIAN (dark) or AURORA (light): every PR7-Z window at once, and (finish.py) every other family app."""
+        theme.set_finish(name)
+        finish.set(theme.FINISH)                 # every family app follows (finish.py)
+        self.settings.setValue("finish", theme.FINISH)
+        app = QApplication.instance()
+        app.setPalette(theme.palette())
+        app.setStyleSheet(theme.stylesheet())
+        for top in app.topLevelWidgets():
+            for child in [top] + top.findChildren(QWidget):
+                child.update()
+        for n, a in getattr(self, "finish_acts", {}).items():
+            a.setChecked(theme.FINISH == n)
+
     def _act(self, menu: QMenu, text: str, slot=None, shortcut=None, enabled_when=None, checkable=False) -> QAction:
         a = QAction(text, self)
         if shortcut:
@@ -961,6 +975,14 @@ class MainWindow(QMainWindow):
         self.auto_refresh = self._act(m, "Auto Refresh", None, None, None, checkable=True)
         self.auto_refresh.setChecked(self.settings.value("auto_refresh", True, type=bool))
         self.auto_refresh.toggled.connect(lambda on: self.settings.setValue("auto_refresh", on))
+        m.addSeparator()
+        fin = m.addMenu("Finish")
+        self.finish_acts = {}
+        for name in ("obsidian", "aurora"):
+            a = fin.addAction(name.upper(), lambda n=name: self.set_finish(n))
+            a.setCheckable(True)
+            a.setChecked(theme.FINISH == name)
+            self.finish_acts[name] = a
 
         self.fav_menu = bar.addMenu("F&avorites")
         self._build_favorites()

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0
+
+- **AURORA**, the family's light finish: View > Finish switches between OBSIDIAN and AURORA. Keys, menus and buttons stay dark in both, as in the other family apps.
+- **One finish for the whole family**: the choice is shared (HKCU\Software\Paragon\Family), so switching it in any family app switches every open one within two seconds, and new ones start in it.
+
 ## 0.5.1
 
 - Knows the whole family: PR7-DU, PR7-CB, PR7-IS, PR7-PM and PR7-SM are in its list of family apps (their permanent install IDs), so the family links find them when they're installed.

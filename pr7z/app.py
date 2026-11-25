@@ -141,6 +141,10 @@ def make_app(argv: list[str]) -> QApplication:
     QApplication.setOrganizationName("Paragon")
     app = QApplication.instance() or QApplication(argv)
     theme.load_fonts()
+    from PySide6.QtCore import QSettings
+    from . import finish
+    own = QSettings(QSettings.defaultFormat(), QSettings.UserScope, "Paragon", "PR7-Z").value("finish", "obsidian")
+    theme.set_finish(finish.start(str(own)))         # the family's finish, else PR7-Z's own (finish.py)
     app.setPalette(theme.palette())
     app.setStyleSheet(theme.stylesheet())
     ico = Path(__file__).parent / "icons" / "app.ico"
@@ -293,6 +297,12 @@ def main(argv: list[str] | None = None) -> int:
     w = MainWindow(cmd.paths[0] if cmd.paths else None,
                    archive_type=cmd.param if cmd.action == "--open-as" else "")
     w.show()
+    # one finish for the family: follow a switch made in another family app (finish.py)
+    from PySide6.QtCore import QTimer
+    from . import finish
+    _follow = QTimer(w)
+    _follow.timeout.connect(lambda: finish.follow(theme.FINISH, w.set_finish))
+    _follow.start(2000)
     from . import update_ui
     update_ui.start(w)  # a check for updates, once a day
     return app.exec()

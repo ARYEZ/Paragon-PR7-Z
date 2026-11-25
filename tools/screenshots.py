@@ -1,4 +1,4 @@
-"""Screenshots of the real app (offscreen): python tools/screenshots.py OUT_DIR
+"""Screenshots of the real app (offscreen): python tools/screenshots.py OUT_DIR [aurora]
 
 Builds a sample folder and archive with the real engine, then captures the main window inside
 the archive, the Extract dialog, Confirm File Replace and a running progress window.
@@ -17,6 +17,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from PySide6.QtCore import QItemSelectionModel, QSettings, QTimer  # noqa: E402
 
+_family = Path(tempfile.mkdtemp()) / "finish"  # the family's finish, kept out of the real one too
+_family.write_text(sys.argv[2] if len(sys.argv) > 2 else "obsidian")
+os.environ["PARAGON_FAMILY_FILE"] = str(_family)
 QSettings.setDefaultFormat(QSettings.IniFormat)  # keep the screenshot run out of the real settings
 QSettings.setPath(QSettings.IniFormat, QSettings.UserScope, tempfile.mkdtemp())
 

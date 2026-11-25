@@ -102,7 +102,7 @@ class Header(QWidget):
         f2 = QFont("Inter", 1); f2.setPixelSize(12); f2.setWeight(QFont.DemiBold)
         p.setFont(f2); p.setPen(QColor(theme.TEXT_DIM))
         p.drawText(QRectF(mark.right() + 16, 0, 300, r.height()), Qt.AlignVCenter | Qt.AlignLeft, self.subtitle)
-        p.drawText(QRectF(0, 0, r.width() - 22, r.height()), Qt.AlignVCenter | Qt.AlignRight, "OBSIDIAN")
+        p.drawText(QRectF(0, 0, r.width() - 22, r.height()), Qt.AlignVCenter | Qt.AlignRight, theme.FINISH.upper())
         p.setPen(QPen(QColor(theme.PANEL_EDGE), 1))
         p.drawLine(0, r.height() - 1, r.width(), r.height() - 1)
 
@@ -236,7 +236,7 @@ class KeyButton(QAbstractButton):
             outer.setAlphaF(0.8)
         p.setPen(QPen(outer, 1)); p.drawRoundedRect(r.adjusted(-0.5, -0.5, 0.5, 0.5), 6.5, 6.5)
         # icon and label
-        colour = QColor("#FFFFFF") if (hover or down) else QColor(theme.TEXT)
+        colour = QColor("#FFFFFF") if (hover or down) else QColor(theme.ON_DARK)   # the key stays black in AURORA
         if not self.isEnabled():
             colour = QColor(theme.TEXT_DIM)
         if not self.label:  # icon-only key (Up): centred

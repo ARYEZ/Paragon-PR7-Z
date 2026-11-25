@@ -54,8 +54,12 @@ The owner writes Python; explain the why of changes.
 
 ## The look (family rules)
 
-- From Paragon Photo's `docs/paragon-finish-spec.md` (extracted from the PR7 plugins). OBSIDIAN is the
-  only finish so far; AURORA (the light one) is the next to add (`theme.py` is where its values go).
+- From Paragon Photo's `docs/paragon-finish-spec.md` (extracted from the PR7 plugins). Two finishes: OBSIDIAN and
+  AURORA (`theme.set_finish`, the family's theme, PR7-PM's); keys, menus, buttons use `theme.ON_DARK`.
+  `MainWindow.set_finish` re-applies palette and style sheet; View > Finish.
+- `pr7z/finish.py` (no Qt): the family's finish, one choice for every app: HKCU\Software\Paragon\Family "Finish" (a
+  file elsewhere; PARAGON_FAMILY_FILE in tests, conftest). `finish.start` at start-up, `set_finish` saves it, app.py's
+  2 s timer `finish.follow`s another app's switch. The same file in every family app: keep them in step.
 - **Colours: the family's only**: hues ~318 deg -> 0 -> 42 deg (pink, red, orange), pearl white and onyx
   greys. No green, blue, purple, yellow or cyan anywhere, Qt's defaults included (`theme.palette()`
   sets every role). Accent fills are the family gradient (DE0639 -> CD6619 x 1.18); text never carries it.
