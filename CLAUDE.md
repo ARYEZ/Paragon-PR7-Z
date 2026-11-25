@@ -73,4 +73,6 @@ The owner writes Python; explain the why of changes.
 - CI (`.github/workflows/build.yml`, windows-latest): tests against the bundled 7z.exe, then the
   PyInstaller build (`pr7z.spec`, folder build so Explorer actions start fast) and a zip artifact;
   a `v*` tag publishes a release.
-- Releases: bump `__version__` in `pr7z/__init__.py`, add a `## x.y.z` section to CHANGELOG.md.
+- Releases: bump `__version__` in `pr7z/__init__.py` and add a `## x.y.z` section to CHANGELOG.md, then push:
+  CI publishes that version by itself once every check has passed (the "Is this version released yet?"
+  step; this session can't start workflows or push tags). Run workflow / `v*` tags still work.
