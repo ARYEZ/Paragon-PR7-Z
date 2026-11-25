@@ -27,7 +27,8 @@ The owner writes Python; explain the why of changes.
 - `pr7z/models.py` (locations: drives, folder, inside an archive; `ArchiveTree` fills implied folders and
   totals folder sizes), `main_window.py` (the window; `EntryModel` is a plain Python list model: **don't
   go back to QStandardItemModel**, its item ownership crashed PySide on `clear()`), `dialogs.py`,
-  `add_dialog.py`, `options.py`, `shell.py` (Explorer menu and Open with, HKCU only), `app.py` (CLI and
+  `add_dialog.py`, `options.py` (Editor: empty = Automatic = PR7-W when installed, else Notepad;
+  `MainWindow.editor_command`), `shell.py` (Explorer menu and Open with, HKCU only), `app.py` (CLI and
   the collector that merges the basic menu's one-process-per-file launches), `mail.py` (Compress and email).
 - **The Explorer menu is `shellext/PR7ZShell.cpp`** (the one C++ part; a shell extension like 7-Zip's
   7-zip.dll, CLSID {ED2155D5-4754-4F17-A401-780852864C71}: never change it). Explorer loads it into its own
@@ -49,7 +50,7 @@ The owner writes Python; explain the why of changes.
   PR7ZShell-<sha256[:12]>.dll. Explorer locks the DLL it has loaded; registering a content-named copy
   means installs never overwrite a locked file or restart Explorer. Don't register the file in `_internal`.
 
-- Updates: `pr7z/updates.py` (no Qt; GitHub's public releases/latest, User-Agent names only the app, installer asset `PR7-Z-Setup-*.exe`, run with /SILENT /relaunch=1) and `update_ui.py` (once-a-day check from app.py, the menu's Check for Updates, UpdateDialog; settings updates/auto|last|skip; `notify` for tests). The installer's [Code] Relaunch starts PR7-Z again only for /relaunch=1. Same files in every family app (PR7-W's update_ui imports PyQt6): keep them in step. `family.py`: the other family apps by their permanent AppIds (uninstall InstallLocation).
+- Updates: `pr7z/updates.py` (no Qt; GitHub's public releases/latest, User-Agent names only the app, installer asset `PR7-Z-Setup-*.exe`, run with /SILENT /relaunch=1) and `update_ui.py` (once-a-day check from app.py, the menu's Check for Updates, UpdateDialog; settings updates/auto|last|skip; `notify` for tests). The installer's [Code] Relaunch starts PR7-Z again only for /relaunch=1. Same files in every family app (PR7-W's update_ui imports PyQt6): keep them in step. With PR7-U (the family installer) installed, update_ui offers it (`_family_app`, `open_family`; `answer` for tests); every app has the shared family.py with all ten AppIds. `family.py`: the other family apps by their permanent AppIds (uninstall InstallLocation).
 
 ## The look (family rules)
 

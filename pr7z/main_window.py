@@ -15,7 +15,7 @@ from PySide6.QtGui import QAction, QDesktopServices, QDrag, QKeySequence, QPaint
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QFileDialog, QHBoxLayout, QHeaderView,
                                QLabel, QMainWindow, QMenu, QStatusBar, QTreeView, QVBoxLayout, QWidget)
 
-from . import engine, operations, theme
+from . import engine, family, operations, theme
 from .add_dialog import AddDialog
 from .dialogs import (AboutDialog, CopyDialog, ExtractDialog, HistoryDialog, PasswordDialog, PropertiesDialog,
                       TextDialog, ask_text, confirm, engine_version, fmt_size, message, run_job)
@@ -775,7 +775,7 @@ class MainWindow(QMainWindow):
         path = e.path if isinstance(self.loc, FsLocation) else (self._extract_to_temp([e], watch=True) or [None])[0]
         if not path:
             return
-        editor = self.settings.value("editor", "notepad.exe" if os.name == "nt" else "")
+        editor = self.editor_command()
         if editor:
             try:
                 subprocess.Popen([editor, path])
@@ -783,6 +783,15 @@ class MainWindow(QMainWindow):
             except OSError:
                 pass
         QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+
+    def editor_command(self) -> str:
+        """Edit (F4)'s program: the one chosen in Options, else (Automatic) the family's editor PR7-W when it's
+        installed, else Notepad, 7-Zip's default. A saved "notepad.exe" counts as Automatic: Options used to store it
+        whenever OK was pressed, and it shouldn't hide PR7-W installed later."""
+        chosen = str(self.settings.value("editor", "") or "").strip()
+        if chosen and chosen.lower() not in ("notepad", "notepad.exe"):
+            return chosen
+        return family.find("PR7-W") or ("notepad.exe" if os.name == "nt" else "")
 
     def do_hash(self, method: str):
         if isinstance(self.loc, ArchiveLocation):

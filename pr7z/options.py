@@ -67,7 +67,9 @@ class OptionsDialog(ParagonDialog):
         self.hidden.setChecked(window.show_hidden)
         ol.addWidget(self.hidden)
         ol.addWidget(field_label("Editor (F4)"))
-        self.editor = QLineEdit(s.value("editor", "notepad.exe"))
+        chosen = str(s.value("editor", "") or "")
+        self.editor = QLineEdit("" if chosen.lower() in ("notepad", "notepad.exe") else chosen)
+        self.editor.setPlaceholderText("Automatic: PR7-W when it's installed, else Notepad")
         ol.addWidget(self.editor)
         self.body.addWidget(other)
 

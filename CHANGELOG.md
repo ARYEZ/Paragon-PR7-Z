@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0
+
+- **Edit (F4) uses PR7-W** when it's installed. The Editor option's new default, Automatic, means PR7-W, else Notepad (7-Zip's default); an editor you chose yourself still wins.
+- **Check for Updates knows PR7-U**, the family installer. When it's installed, the update window has **Update All in PR7-U**, and a check by hand that finds PR7-Z up to date offers to open PR7-U for the rest of the family.
+
 ## 0.4.0
 
 - **Check for updates**: a few seconds after starting (at most once a day) PR7-Z asks GitHub whether a newer release is out; if so, a note offers What's new, Install Now (downloads with progress, installs over this copy, and PR7-Z reopens), Later or Skip This Version. "Help > Check for Updates" checks by hand. Only the app's name is sent.

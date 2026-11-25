@@ -180,3 +180,25 @@ def test_big_archive_listing_is_fast(win):
     assert elapsed < 5.0, elapsed
     win.flat_act.trigger()  # flat view of a 1 000-file folder
     assert win.proxy.rowCount() > 100
+
+
+def test_edit_uses_pr7w_when_installed(win, tmp_path, monkeypatch):
+    """F4 inside an archive: the file is extracted and opened in the editor; Automatic = PR7-W if installed."""
+    from pr7z import family
+    started = []
+    import types                                            # only the window's own Popen (extracting uses subprocess too)
+    monkeypatch.setattr(main_window, "subprocess", types.SimpleNamespace(Popen=lambda args, **k: started.append(list(args))))
+    monkeypatch.setattr(family, "find", lambda app: "C:\\PR7-W\\PR7-W.exe" if app == "PR7-W" else None)
+    win.settings.setValue("editor", "notepad.exe")          # what older Options saved: still Automatic
+    win.navigate(str(tmp_path / "Stems.7z" / "src"))
+    win._select_name("a.txt")
+    win.do_edit()
+    assert started[-1][0] == "C:\\PR7-W\\PR7-W.exe"
+    assert Path(started[-1][1]).name == "a.txt" and Path(started[-1][1]).read_bytes() == b"hello\n"
+    assert Path(started[-1][1]).is_file() and not str(started[-1][1]).startswith(str(tmp_path / "Stems.7z"))
+    monkeypatch.setattr(family, "find", lambda app: None)    # no PR7-W: Notepad (7-Zip's default)
+    assert win.editor_command() == ("notepad.exe" if os.name == "nt" else "")
+    win.settings.setValue("editor", "C:\\Tools\\vim.exe")  # a chosen editor always wins
+    monkeypatch.setattr(family, "find", lambda app: "C:\\PR7-W\\PR7-W.exe")
+    assert win.editor_command() == "C:\\Tools\\vim.exe"
+    win.settings.remove("editor")
