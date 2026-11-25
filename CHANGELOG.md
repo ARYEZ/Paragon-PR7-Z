@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1
+
+- The family's list knows the newest apps (PR7-HB, PR7-FS, PR7-AR, PR7-WM), so links between apps and Check for Updates find them.
+
 ## 0.6.0
 
 - **AURORA**, the family's light finish: View > Finish switches between OBSIDIAN and AURORA. Keys, menus and buttons stay dark in both, as in the other family apps.
