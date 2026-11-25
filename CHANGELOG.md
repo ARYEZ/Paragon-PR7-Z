@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1
+
+- Knows the whole family: PR7-DU, PR7-CB, PR7-IS, PR7-PM and PR7-SM are in its list of family apps (their permanent install IDs), so the family links find them when they're installed.
+
 ## 0.5.0
 
 - **Edit (F4) uses PR7-W** when it's installed. The Editor option's new default, Automatic, means PR7-W, else Notepad (7-Zip's default); an editor you chose yourself still wins.
